@@ -95,6 +95,12 @@ public enum LuaGrammar implements GrammarRuleKey {
     LT("<"),
     GT(">"),
     EQ("="),
+    AMPERSAND("&"),
+    PIPE("|"),
+    TILDA("~"),
+    LSHIFT("<<"),
+    RSHIFT(">>"),
+    IDIV("//"),
     LPARENTHESES("("),
     RPARENTHESES(")"),
     LCURLYBRACKET("{"),
@@ -136,7 +142,8 @@ public enum LuaGrammar implements GrammarRuleKey {
     THEN("then"),
     TRUE("true"),
     UNTIL("until"),
-    WHILE("while");
+    WHILE("while"),
+    GOTO("goto");
 
     private String value;
 
@@ -166,8 +173,9 @@ public enum LuaGrammar implements GrammarRuleKey {
         IF_STATEMENT,
         FOR_STATEMENT,
         FUNCSTAT,
-	LOCALFUNCSTAT,
-       
+        LOCALFUNCSTAT,
+        b.sequence(Keyword.GOTO, NAME),
+
         b.sequence(Keyword.LOCAL, NAMELIST, b.optional(Punctuator.EQ, EXPLIST)),
         b.sequence(VARLIST, Punctuator.EQ, EXPLIST),
         FUNCTIONCALL));
@@ -255,11 +263,13 @@ public enum LuaGrammar implements GrammarRuleKey {
     b.rule(FIELDSEP).is(b.firstOf(Punctuator.COMMA, Punctuator.SEMICOLON));
 
     b.rule(BINOP).is(b.firstOf(
-        Punctuator.PLUS, Punctuator.MINUS, Punctuator.MUL, Punctuator.DIV, Punctuator.CARET, Punctuator.MOD, Punctuator.DOTDOT,
+        Punctuator.IDIV, Punctuator.LSHIFT, Punctuator.RSHIFT,
         Punctuator.LE, Punctuator.LT, Punctuator.GE, Punctuator.GT, Punctuator.EQEQ, Punctuator.EQ, Punctuator.TILDA_EQ,
+        Punctuator.PLUS, Punctuator.MINUS, Punctuator.MUL, Punctuator.DIV, Punctuator.CARET, Punctuator.MOD, Punctuator.DOTDOT,
+        Punctuator.AMPERSAND, Punctuator.PIPE, Punctuator.TILDA,
         Keyword.AND, Keyword.OR));
 
-    b.rule(UNOP).is(b.firstOf(Punctuator.MINUS, Keyword.NOT, Punctuator.HASH));
+    b.rule(UNOP).is(b.firstOf(Punctuator.MINUS, Keyword.NOT, Punctuator.HASH, Punctuator.TILDA));
 
     b.setRootRule(ROOT);
 
