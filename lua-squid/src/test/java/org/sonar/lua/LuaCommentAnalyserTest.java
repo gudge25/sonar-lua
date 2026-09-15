@@ -34,9 +34,9 @@ public class LuaCommentAnalyserTest {
 
   @Test
   public void content() {
-  
-  assertThat(analyser.getContents("--[[comment1 \n comment2--]]")).isEqualTo("comment1 \n comment2");
-  assertThat(analyser.getContents("--comment")).isEqualTo("comment");
+    assertThat(analyser.getContents("--[[comment1 \n comment2--]]")).isEqualTo("comment1 \n comment2--");
+    assertThat(analyser.getContents("--[=[comment1 \n comment2]=]")).isEqualTo("comment1 \n comment2");
+    assertThat(analyser.getContents("--comment")).isEqualTo("comment");
   }
 
   @Test

@@ -1,6 +1,6 @@
 /*
  * SonarQube Lua Plugin
- * Copyright (C) 2016 
+ * Copyright (C) 2016
  * mailto:fati.ahmadi66 AT gmail DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,8 @@
  * along with this program; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 package org.sonar.lua;
+
 import org.sonar.squidbridge.CommentAnalyser;
 
 public class LuaCommentAnalyser extends CommentAnalyser {
@@ -35,17 +35,45 @@ public class LuaCommentAnalyser extends CommentAnalyser {
 
   @Override
   public String getContents(String comment) {
-      if (comment.startsWith("--[[")) {
-      if (comment.endsWith("--]]")) {
-        return comment.substring(4, comment.length() - 4);
-      }
-      return comment.substring(4);
-    } else 
-    	if (comment.startsWith("--")) {
-    	      return comment.substring(2, comment.length());
-    	    } 
-    	else{
-      throw new IllegalArgumentException();
+    if (!comment.startsWith("--")) {
+      throw new IllegalArgumentException("Not a Lua comment: " + comment);
     }
+
+    String afterPrefix = comment.substring(2);
+    int level = readLongBracketLevel(afterPrefix);
+    if (level < 0) {
+      return comment.substring(2);
+    }
+
+    String closing = "]" + repeatEquals(level) + "]";
+    if (!comment.endsWith(closing)) {
+      return comment.substring(2 + closing.length());
+    }
+    return comment.substring(2 + closing.length(), comment.length() - closing.length());
   }
+
+  private static int readLongBracketLevel(String text) {
+    if (text.isEmpty() || text.charAt(0) != '[') {
+      return -1;
+    }
+    int level = 0;
+    int i = 1;
+    while (i < text.length() && text.charAt(i) == '=') {
+      level++;
+      i++;
+    }
+    if (i >= text.length() || text.charAt(i) != '[') {
+      return -1;
+    }
+    return level;
+  }
+
+  private static String repeatEquals(int count) {
+    StringBuilder builder = new StringBuilder(count);
+    for (int i = 0; i < count; i++) {
+      builder.append('=');
+    }
+    return builder.toString();
+  }
+
 }
