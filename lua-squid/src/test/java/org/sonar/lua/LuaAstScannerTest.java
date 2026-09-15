@@ -21,7 +21,6 @@ package org.sonar.lua;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.sonar.lua.LuaConfiguration;
 import org.sonar.lua.api.LuaMetric;
@@ -85,5 +84,11 @@ public class LuaAstScannerTest {
 	  public void complexity() {
 	    SourceFile file = LuaAstScanner.scanSingleFile(new File("src/test/resources/metrics/complexity.lua"));
 	    assertThat(file.getInt(LuaMetric.COMPLEXITY)).isEqualTo(3);
+	  }
+
+	 @Test
+	  public void commentLines() {
+	    SourceFile file = LuaAstScanner.scanSingleFile(new File("src/test/resources/metrics/comments.lua"));
+	    assertThat(file.getInt(LuaMetric.COMMENT_LINES)).isEqualTo(3);
 	  }
 }
