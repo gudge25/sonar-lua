@@ -1,6 +1,6 @@
 /*
  * SonarQube Lua Plugin
- * Copyright (C) 2016 
+ * Copyright (C) 2016
  * mailto:fati.ahmadi66 AT gmail DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -20,59 +20,68 @@
 package org.sonar.plugins.lua;
 
 import com.google.common.collect.ImmutableList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.rule.CheckFactory;
-import org.sonar.api.batch.rule.Checks;
 import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.batch.sensor.issue.NewIssueLocation;
-import org.sonar.api.ce.measure.RangeDistributionBuilder;
 import org.sonar.api.measures.CoreMetrics;
-import org.sonar.api.measures.FileLinesContextFactory;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.lua.LuaAstScanner;
 import org.sonar.lua.LuaConfiguration;
 import org.sonar.lua.api.LuaMetric;
+import org.sonar.lua.lexer.LuaLexer;
 import org.sonar.lua.checks.CheckList;
-
-import org.sonar.lua.metrics.FileLinesVisitor;
 import org.sonar.plugins.lua.core.Lua;
 import org.sonar.squidbridge.AstScanner;
 import org.sonar.squidbridge.SquidAstVisitor;
 import org.sonar.squidbridge.api.CheckMessage;
-import org.sonar.squidbridge.api.SourceClass;
 import org.sonar.squidbridge.api.SourceCode;
 import org.sonar.squidbridge.api.SourceFile;
-import org.sonar.squidbridge.api.SourceFunction;
 import org.sonar.squidbridge.checks.SquidCheck;
-import org.sonar.squidbridge.indexer.QueryByParent;
 import org.sonar.squidbridge.indexer.QueryByType;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class LuaSquidSensor implements Sensor {
 
-  private static final Number[] FUNCTIONS_DISTRIB_BOTTOM_LIMITS = {1, 2, 4, 6, 8, 10, 12};
-  private static final Number[] FILES_DISTRIB_BOTTOM_LIMITS = {0, 5, 10, 20, 30, 60, 90};
+  private static final Logger LOG = LoggerFactory.getLogger(LuaSquidSensor.class);
 
-  private final Checks<SquidCheck<LexerlessGrammar>> checks;
-  private final FileLinesContextFactory fileLinesContextFactory;
+  private final List<SquidCheck<LexerlessGrammar>> checks;
+  private final Map<Class<? extends SquidCheck<LexerlessGrammar>>, RuleKey> ruleKeysByCheck;
 
   private AstScanner<LexerlessGrammar> scanner;
 
-  public LuaSquidSensor(CheckFactory checkFactory, FileLinesContextFactory fileLinesContextFactory) {
-    this.checks = checkFactory
-      .<SquidCheck<LexerlessGrammar>>create(CheckList.REPOSITORY_KEY)
-      .addAnnotatedChecks((Iterable) CheckList.getChecks());
-    this.fileLinesContextFactory = fileLinesContextFactory;
+  public LuaSquidSensor() {
+    this.checks = new ArrayList<>();
+    this.ruleKeysByCheck = new HashMap<>();
+    for (Class<?> checkClass : CheckList.getChecks()) {
+      org.sonar.check.Rule rule = checkClass.getAnnotation(org.sonar.check.Rule.class);
+      if (rule == null) {
+        continue;
+      }
+      try {
+        @SuppressWarnings("unchecked")
+        SquidCheck<LexerlessGrammar> check = (SquidCheck<LexerlessGrammar>) checkClass.getDeclaredConstructor().newInstance();
+        checks.add(check);
+        @SuppressWarnings("unchecked")
+        Class<SquidCheck<LexerlessGrammar>> checkClassKey = (Class<SquidCheck<LexerlessGrammar>>) check.getClass();
+        ruleKeysByCheck.put(checkClassKey, RuleKey.of(CheckList.REPOSITORY_KEY, rule.key()));
+      } catch (Exception e) {
+        LOG.warn("Unable to instantiate check: " + checkClass.getName(), e);
+      }
+    }
   }
 
   @Override
@@ -87,9 +96,9 @@ public class LuaSquidSensor implements Sensor {
   public void execute(SensorContext context) {
     FileSystem fileSystem = context.fileSystem();
     FilePredicates predicates = fileSystem.predicates();
-    List<SquidAstVisitor<LexerlessGrammar>> visitors = new ArrayList<>(checks.all());
-    visitors.add(new FileLinesVisitor(fileLinesContextFactory, fileSystem));
+    List<SquidAstVisitor<LexerlessGrammar>> visitors = new ArrayList<>(checks);
     LuaConfiguration configuration = new LuaConfiguration(fileSystem.encoding());
+    visitors.add(new LuaTokensVisitor(context, LuaLexer.create(configuration)));
 
     scanner = LuaAstScanner.create(configuration, visitors);
 
@@ -112,11 +121,7 @@ public class LuaSquidSensor implements Sensor {
 
       InputFile inputFile = fileSystem.inputFile(fileSystem.predicates().hasPath(squidFile.getKey()));
 
-      saveClassComplexity(context, inputFile, squidFile);
       saveMeasures(context, inputFile, squidFile);
-      saveFunctionsComplexityDistribution(context, inputFile, squidFile);
-      saveFilesComplexityDistribution(context, inputFile, squidFile);
-      visitors.add(new LuaTokensVisitor(context, LuaLexer.create(configuration)));
       saveViolations(context, inputFile, squidFile);
     }
   }
@@ -137,7 +142,7 @@ public class LuaSquidSensor implements Sensor {
       .forMetric(CoreMetrics.COMMENT_LINES)
       .withValue(squidFile.getInt(LuaMetric.COMMENT_LINES))
       .save();
-    
+
     context.<Integer>newMeasure()
       .on(inputFile)
       .forMetric(CoreMetrics.FUNCTIONS)
@@ -155,50 +160,17 @@ public class LuaSquidSensor implements Sensor {
       .save();
   }
 
-  private void saveClassComplexity(SensorContext context, InputFile inputFile, SourceFile squidFile) {
-    Collection<SourceCode> classes = scanner.getIndex().search(new QueryByParent(squidFile), new QueryByType(SourceClass.class));
-    int complexityInClasses = 0;
-    for (SourceCode squidClass : classes) {
-      int classComplexity = squidClass.getInt(LuaMetric.COMPLEXITY);
-      complexityInClasses += classComplexity;
-    }
-    context.<Integer>newMeasure()
-      .on(inputFile)
-      .forMetric(CoreMetrics.COMPLEXITY_IN_CLASSES)
-      .withValue(complexityInClasses)
-      .save();
-  }
-
-  private void saveFunctionsComplexityDistribution(SensorContext context, InputFile inputFile, SourceFile squidFile) {
-    Collection<SourceCode> squidFunctionsInFile = scanner.getIndex().search(new QueryByParent(squidFile), new QueryByType(SourceFunction.class));
-    RangeDistributionBuilder complexityDistribution = new RangeDistributionBuilder(FUNCTIONS_DISTRIB_BOTTOM_LIMITS);
-    for (SourceCode squidFunction : squidFunctionsInFile) {
-      complexityDistribution.add(squidFunction.getDouble(LuaMetric.COMPLEXITY));
-    }
-    context.<String>newMeasure()
-      .on(inputFile)
-      .forMetric(CoreMetrics.FUNCTION_COMPLEXITY_DISTRIBUTION)
-      .withValue(complexityDistribution.build())
-      .save();
-  }
-
-  private static void saveFilesComplexityDistribution(SensorContext context, InputFile inputFile, SourceFile squidFile) {
-    String distribution = new RangeDistributionBuilder(FILES_DISTRIB_BOTTOM_LIMITS)
-      .add(squidFile.getDouble(LuaMetric.COMPLEXITY))
-      .build();
-    context.<String>newMeasure()
-      .on(inputFile)
-      .forMetric(CoreMetrics.FILE_COMPLEXITY_DISTRIBUTION)
-      .withValue(distribution)
-      .save();
-  }
-
   private void saveViolations(SensorContext context, InputFile inputFile, SourceFile squidFile) {
     Collection<CheckMessage> messages = squidFile.getCheckMessages();
     if (messages != null) {
 
       for (CheckMessage message : messages) {
-        RuleKey ruleKey = checks.ruleKey((SquidCheck<LexerlessGrammar>) message.getCheck());
+        @SuppressWarnings("unchecked")
+        SquidCheck<LexerlessGrammar> check = (SquidCheck<LexerlessGrammar>) message.getCheck();
+        RuleKey ruleKey = ruleKeysByCheck.get(check.getClass());
+        if (ruleKey == null) {
+          continue;
+        }
         NewIssue newIssue = context.newIssue()
           .forRule(ruleKey)
           .gap(message.getCost());

@@ -21,7 +21,7 @@ package org.sonar.plugins.lua.core;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
-import org.sonar.api.config.Settings;
+import org.sonar.api.config.Configuration;
 import org.sonar.api.resources.AbstractLanguage;
 import org.sonar.plugins.lua.LuaPlugin;
 
@@ -35,16 +35,16 @@ public class Lua extends AbstractLanguage {
 
   public static final String DEFAULT_FILE_SUFFIXES = "lua";
 
-  private final Settings settings;
+  private final Configuration configuration;
 
   /**
    * Creates the {@link Lua} language.
    * <br/>
-   * <b>Do not call, this constructor is called by Pico container.</b>
+   * <b>Do not call, this constructor is called by SonarQube.</b>
    */
-  public Lua(Settings settings) {
+  public Lua(Configuration configuration) {
     super(KEY, NAME);
-    this.settings = settings;
+    this.configuration = configuration;
   }
 
   /**
@@ -52,7 +52,7 @@ public class Lua extends AbstractLanguage {
    */
   @Override
   public String[] getFileSuffixes() {
-    String[] suffixes = filterEmptyStrings(settings.getStringArray(LuaPlugin.FILE_SUFFIXES_KEY));
+    String[] suffixes = filterEmptyStrings(configuration.getStringArray(LuaPlugin.FILE_SUFFIXES_KEY));
     if (suffixes.length == 0) {
       suffixes = StringUtils.split(DEFAULT_FILE_SUFFIXES, ",");
     }

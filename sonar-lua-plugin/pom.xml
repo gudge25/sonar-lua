@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.sonarsource.lua</groupId>
     <artifactId>lua</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1</version>
   </parent>
 
   <artifactId>sonar-lua-plugin</artifactId>
@@ -13,7 +13,6 @@
 
   <name>Lua :: Sonar Plugin</name>
   <description>Enables scanning of Lua source files</description>
-  <url>http://redirect.sonarsource.com/plugins/lua.html</url>
 
   <properties>
     <sonar.pluginClass>org.sonar.plugins.lua.LuaPlugin</sonar.pluginClass>
@@ -23,9 +22,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.sonarsource.sonarqube</groupId>
+      <groupId>org.sonarsource.api.plugin</groupId>
       <artifactId>sonar-plugin-api</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.sonarsource.analyzer-commons</groupId>
+      <artifactId>sonar-analyzer-commons</artifactId>
     </dependency>
 
     <dependency>
@@ -43,10 +46,10 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- unit tests -->
     <dependency>
-      <groupId>org.sonarsource.sonarqube</groupId>
-      <artifactId>sonar-testing-harness</artifactId>
+      <groupId>org.sonarsource.api.plugin</groupId>
+      <artifactId>sonar-plugin-api-test-fixtures</artifactId>
+      <version>${sonar.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -59,10 +62,26 @@
       <artifactId>fest-assert</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.sonarsource.sonar-packaging-maven-plugin</groupId>
+        <artifactId>sonar-packaging-maven-plugin</artifactId>
+        <version>1.23.0.740</version>
+        <extensions>true</extensions>
+        <configuration>
+          <pluginClass>${sonar.pluginClass}</pluginClass>
+          <pluginName>${sonar.pluginName}</pluginName>
+          <skipDependenciesPackaging>${sonar.skipDependenciesPackaging}</skipDependenciesPackaging>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
@@ -80,30 +99,7 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>enforce-plugin-size</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <phase>verify</phase>
-            <configuration>
-              <rules>
-                <requireFilesSize>
-                  <maxsize>1700000</maxsize>
-                  <minsize>1232056</minsize>
-                  <files>
-                    <file>${project.build.directory}/${project.build.finalName}.jar</file>
-                  </files>
-                </requireFilesSize>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
+
 </project>

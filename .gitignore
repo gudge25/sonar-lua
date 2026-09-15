@@ -1,0 +1,5 @@
+# Maven build artifacts
+target/
+
+# Claude Code session files
+.claude/

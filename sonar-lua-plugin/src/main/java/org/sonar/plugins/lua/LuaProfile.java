@@ -19,30 +19,28 @@
  */
 package org.sonar.plugins.lua;
 
-import org.sonar.api.profiles.ProfileDefinition;
-import org.sonar.api.profiles.RulesProfile;
-import org.sonar.api.rules.RuleFinder;
-import org.sonar.api.utils.ValidationMessages;
+import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
 import org.sonar.lua.checks.CheckList;
 import org.sonar.plugins.lua.core.Lua;
-import org.sonar.squidbridge.annotations.AnnotationBasedProfileBuilder;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
 
-public class LuaProfile extends ProfileDefinition {
-
-  private final RuleFinder ruleFinder;
-
-  public LuaProfile(RuleFinder ruleFinder) {
-    this.ruleFinder = ruleFinder;
-  }
+public class LuaProfile implements BuiltInQualityProfilesDefinition {
 
   @Override
-  public RulesProfile createProfile(ValidationMessages validation) {
-    AnnotationBasedProfileBuilder annotationBasedProfileBuilder = new AnnotationBasedProfileBuilder(ruleFinder);
-    return annotationBasedProfileBuilder.build(
-        CheckList.REPOSITORY_KEY,
-        CheckList.SONAR_WAY_PROFILE,
-        Lua.KEY,
-        CheckList.getChecks(),
-        validation);
+  public void define(Context context) {
+    BuiltInQualityProfilesDefinition.NewBuiltInQualityProfile profile = context
+      .createBuiltInQualityProfile(CheckList.SONAR_WAY_PROFILE, Lua.KEY)
+      .setDefault(true);
+
+    for (Class<?> checkClass : CheckList.getChecks()) {
+      if (checkClass.isAnnotationPresent(ActivatedByDefault.class)) {
+        org.sonar.check.Rule rule = checkClass.getAnnotation(org.sonar.check.Rule.class);
+        if (rule != null) {
+          profile.activateRule(CheckList.REPOSITORY_KEY, rule.key());
+        }
+      }
+    }
+
+    profile.done();
   }
 }

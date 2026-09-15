@@ -1,6 +1,6 @@
 /*
  * SonarQube Lua Plugin
- * Copyright (C) 2016 
+ * Copyright (C) 2016
  * mailto:contact AT sonarsource DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,10 +19,20 @@
  */
 package org.sonar.plugins.lua;
 
+import java.lang.reflect.Field;
+import java.util.List;
+import org.sonar.api.rule.RuleStatus;
 import org.sonar.api.server.rule.RulesDefinition;
-import org.sonar.lua.checks.CheckList;
+import org.sonar.api.server.rule.RulesDefinition.NewRule;
+import org.sonar.api.server.rule.RulesDefinition.NewRepository;
+import org.sonar.check.Priority;
+import org.sonar.check.RuleProperty;
 
-import org.sonar.squidbridge.annotations.AnnotationBasedRulesDefinition;
+
+import org.sonar.lua.checks.CheckList;
+import org.sonar.plugins.lua.core.Lua;
+import org.sonar.squidbridge.annotations.ActivatedByDefault;
+import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
 
 public final class LuaRulesDefinition implements RulesDefinition {
 
@@ -31,11 +41,62 @@ public final class LuaRulesDefinition implements RulesDefinition {
   @Override
   public void define(Context context) {
     NewRepository repository = context
-      .createRepository(CheckList.REPOSITORY_KEY, "lua")
+      .createRepository(CheckList.REPOSITORY_KEY, Lua.KEY)
       .setName(REPOSITORY_NAME);
 
-    new AnnotationBasedRulesDefinition(repository, "lua").addRuleClasses(false, CheckList.getChecks());
+    for (Class<?> checkClass : CheckList.getChecks()) {
+      registerRule(repository, checkClass);
+    }
 
     repository.done();
+  }
+
+  private static void registerRule(NewRepository repository, Class<?> checkClass) {
+    org.sonar.check.Rule rule = checkClass.getAnnotation(org.sonar.check.Rule.class);
+    if (rule == null) {
+      return;
+    }
+
+    String description = rule.description();
+    if (description == null || description.isEmpty()) {
+      description = rule.name();
+    }
+
+    NewRule newRule = repository.createRule(rule.key())
+      .setName(rule.name())
+      .setHtmlDescription(description)
+      .setStatus(RuleStatus.READY)
+      .setSeverity(mapPriority(rule.priority()))
+      .setTags(rule.tags());
+
+    if (checkClass.isAnnotationPresent(ActivatedByDefault.class)) {
+      newRule.setActivatedByDefault(true);
+    }
+
+    for (Field field : checkClass.getDeclaredFields()) {
+      RuleProperty property = field.getAnnotation(RuleProperty.class);
+      if (property != null) {
+        newRule.createParam(property.key().isEmpty() ? field.getName() : property.key())
+          .setDescription(property.description())
+          .setDefaultValue(property.defaultValue());
+      }
+    }
+  }
+
+  private static String mapPriority(Priority priority) {
+    switch (priority) {
+      case BLOCKER:
+        return "BLOCKER";
+      case CRITICAL:
+        return "CRITICAL";
+      case MAJOR:
+        return "MAJOR";
+      case MINOR:
+        return "MINOR";
+      case INFO:
+        return "INFO";
+      default:
+        return "MAJOR";
+    }
   }
 }

@@ -2,113 +2,167 @@ SonarQube Lua Plugin
 ====================
 
 ## Description
-This plugin enables analysis of Lua project within SonarQube:
 
- 
-Steps to Analyze a Lua Project
+This plugin enables analysis of Lua projects within SonarQube.
 
-* Install SonarQube Server (http://docs.sonarqube.org/display/SONAR/Setup+and+Upgrade)
+It was originally written for SonarQube 5.6 and has been modernized to work with SonarQube 9+ / 10+ / 26.x using the modern `org.sonarsource.api.plugin:sonar-plugin-api`.
 
-* Install SonarQube Scanner see(http://docs.sonarqube.org/display/SONAR/Setup+and+Upgrade).
+## What Works
 
-* Download Lua Plugin see "release".
+- Language detection for `.lua` files
+- Core metrics: `ncloc`, `lines`, `comment_lines`, `functions`, `statements`, `complexity`
+- 16 rules registered in the `lua` repository
+- 14 rules active by default in the `Sonar way` quality profile
+- Issue reporting for activated rules
+- Syntax highlighting and CPD token registration
+- Dockerized Maven build environment
 
-* Install Lua Plugin see( http://docs.sonarqube.org/display/SONAR/Installing+a+Plugin)
+## Build Requirements
 
-* Create a sonar-project.properties file at the root of your project.
+- Docker (the build environment is fully containerized)
+- A running SonarQube instance to deploy the plugin
 
-* Run sonar-scanner command from the project root dir.
+## Build
 
-* Follow the link provided at the end of the 
- analysis to browse your project's quality in SonarQube UI
+A helper script and a Makefile are provided:
 
+```bash
+./build-with-docker.sh
+# or
+make build
+```
 
-## The metrics:
- * Computes the following metrics: 
- 
-  * LINES_OF_CODE,
-  
-  * LINES,
-  
-  * FILES,
-  
-  * COMMENT_LINES,
-  
-  * FUNCTIONS,
-  
-  * STATEMENTS,
-  
-  * TABLECONSTRUCTORS,
-  
-  * COMPLEXITY;
+This builds the plugin JAR:
 
-### Complexity
-The following elements increment the complexity by one:
+```
+sonar-lua-plugin/target/sonar-lua-plugin-1.1.jar
+```
 
- * FUNCTION
- 
- * FUNCSTAT 
- 
- * WHILE_STATEMENT
- 
- * FOR_STATEMENT
- 
- * IF_STATEMENT
- 
- * DO_STATEMENT
- 
- * REPEAT_STATEMENT
- 
- * ELSEIF_STATEMENT
- 
- * TAILCALL
- 
- * BREAK
- 
- * AND
- 
- * OR
- 
+You can also build manually with Docker:
+
+```bash
+docker build -f Dockerfile.build -t sonar-lua-build .
+docker run --rm -v "$(pwd)":/build sonar-lua-build \
+  mvn clean package -Dmaven.test.skip=true -Dlicense.skip=true
+```
+
+## Deploy
+
+Copy the built JAR into the SonarQube extensions directory and restart SonarQube:
+
+```bash
+docker cp sonar-lua-plugin/target/sonar-lua-plugin-1.1.jar \
+  sonarqube:/opt/sonarqube/extensions/plugins/
+docker restart sonarqube
+```
+
+Wait for SonarQube to fully start, then verify the plugin appears in the logs:
+
+```bash
+docker logs sonarqube --tail=100 | grep -i lua
+```
+
+## Analyze a Lua Project
+
+Create a `sonar-project.properties` file at the root of your Lua project:
+
+```properties
+sonar.projectKey=my-lua-project
+sonar.projectName=My Lua Project
+sonar.sources=.
+sonar.host.url=http://your-sonarqube:9000
+sonar.token=YOUR_SONARQUBE_TOKEN
+sonar.lua.file.suffixes=lua
+```
+
+Run the scanner:
+
+```bash
+sonar-scanner
+```
+
+Or with Docker:
+
+```bash
+docker run --rm --network=your_sonarqube_network -v "$(pwd)":/usr/src \
+  sonarsource/sonar-scanner-cli
+```
+
+## Update / Rebuild
+
+After changing plugin code:
+
+1. Rebuild with `./build-with-docker.sh` or `make build`
+2. Redeploy the JAR to SonarQube
+3. Restart SonarQube
+4. Re-run analysis on your project
+
+### Makefile Targets
+
+A `Makefile` with common tasks is included:
+
+```bash
+make build        # Build the plugin JAR
+make test         # Run Maven tests
+make clean        # Clean build artifacts
+make deploy       # Build and deploy to SonarQube
+make deploy-logs  # Show SonarQube logs filtered for Lua-related messages
+make scan         # Run sonar-scanner on the test project
+make all          # Build, deploy, and show logs
+make help         # Show all available targets
+```
+
+## Modernization Notes
+
+Major changes compared to the original plugin:
+
+- Migrated from the legacy `sonar-plugin-api` 5.6 to `org.sonarsource.api.plugin:sonar-plugin-api` 10.7.0.2191
+- Replaced `Settings` with `Configuration`
+- Replaced `ProfileDefinition` with `BuiltInQualityProfilesDefinition`
+- Replaced `AnnotationBasedRulesDefinition` with a custom annotation-based rule registration
+- Removed Cobertura coverage support (relied on removed APIs)
+- Removed `FileLinesVisitor` (relied on removed `FileLinesContextFactory`)
+- Removed old complexity distribution metrics (`FUNCTION_COMPLEXITY_DISTRIBUTION`, `FILE_COMPLEXITY_DISTRIBUTION`)
+- Added compatibility stubs for old `org.sonar.check.*` annotations used by checks
+- Rewrote `LuaSquidSensor` to manually instantiate checks and save issues via the modern `SensorContext` API
+
+## Remaining Work for Full Feature Parity
+
+- Re-implement coverage support using the modern coverage API
+- Modernize the remaining `lua-checks` unit tests (currently skipped because the old test harness is incompatible)
+- Clean up compatibility stubs and fully migrate checks to the modern API
+
+## Metrics
+
+The plugin computes the following metrics:
+
+- `LINES_OF_CODE` (NCLOC)
+- `LINES`
+- `FILES`
+- `COMMENT_LINES`
+- `FUNCTIONS`
+- `STATEMENTS`
+- `COMPLEXITY`
+
 ## Rules
 
- * FunctionComplexityCheck.
- 
- * MethodComplexityCheck
- 
- * LocalFunctionComplexityCheck
- 
- * FunctionCallComplexityCheck
- 
- * FileComplexityCheck.
- 
- * TableComplexityCheck
+- `CommentRegularExpressionCheck`
+- `FileComplexityCheck`
+- `FunctionCallComplexityCheck`
+- `FunctionComplexityCheck`
+- `FunctionWithTooManyParametersCheck`
+- `LineLengthCheck`
+- `LocalFunctionComplexityCheck`
+- `LocalFunctionNameCheck`
+- `MethodComplexityCheck`
+- `NestedControlFlowDepthCheck`
+- `NestedFunctionsDepthCheck`
+- `NestedTablesDepthCheck`
+- `TableComplexityCheck`
+- `TableWithTooManyFieldsCheck`
+- `TooManyLinesInFileCheck`
+- `XPathCheck`
 
- * FunctionWithTooManyParametersCheck.
- 
- * TableWithTooManyFieldsCheck.
-  
- * NestedControlFlowDepthCheck
- 
- * NestedFunctionsDepthCheck
- 
- * NestedTablesDepthCheck
- 
- * LocalFunctionNameCheck
+## License
 
- * LineLengthCheck
- 
- * TooManyLinesInFileCheck
- 
- * CommentRegularExpressionCheck
- 
- *  XPathCheck
- 
- 
- 
-
- 
-
-
-
- 
-
+GNU LGPL 3

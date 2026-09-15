@@ -1,0 +1,10 @@
+# Build environment for SonarQube Lua plugin
+FROM maven:3.9-eclipse-temurin-17
+
+WORKDIR /build
+
+# Copy project files
+COPY . /build/
+
+# Build the project
+CMD ["mvn", "clean", "package", "-DskipTests"]
