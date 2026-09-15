@@ -39,7 +39,7 @@ make build
 This builds the plugin JAR:
 
 ```
-sonar-lua-plugin/target/sonar-lua-plugin-2.0.jar
+sonar-lua-plugin/target/sonar-lua-plugin-2.1.jar
 ```
 
 You can also build manually with Docker:
@@ -55,10 +55,10 @@ docker run --rm -v "$(pwd)":/build sonar-lua-build \
 Download the latest JAR from the [Releases](https://github.com/gudge25/sonar-lua/releases) page and copy it into SonarQube:
 
 ```bash
-wget https://github.com/gudge25/sonar-lua/releases/download/v2.0/sonar-lua-plugin-2.0.jar \
+wget https://github.com/gudge25/sonar-lua/releases/download/v2.1/sonar-lua-plugin-2.1.jar \
   -O /opt/sonarqube/extensions/plugins/sonar-lua-plugin-2.0.jar
 # or for Docker:
-docker cp sonar-lua-plugin-2.0.jar sonarqube:/opt/sonarqube/extensions/plugins/
+docker cp sonar-lua-plugin-2.1.jar sonarqube:/opt/sonarqube/extensions/plugins/
 docker restart sonarqube
 ```
 
@@ -67,7 +67,7 @@ docker restart sonarqube
 Copy the built JAR into the SonarQube extensions directory and restart SonarQube:
 
 ```bash
-docker cp sonar-lua-plugin/target/sonar-lua-plugin-2.0.jar \
+docker cp sonar-lua-plugin/target/sonar-lua-plugin-2.1.jar \
   sonarqube:/opt/sonarqube/extensions/plugins/
 docker restart sonarqube
 ```
