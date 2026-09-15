@@ -26,8 +26,6 @@ import org.sonar.check.RuleProperty;
 import org.sonar.lua.grammar.LuaGrammar;
 import org.sonar.lua.checks.utils.Tags;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
-import org.sonar.squidbridge.annotations.SqaleLinearWithOffsetRemediation;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
@@ -36,7 +34,6 @@ name = "Tables should not have many parameters",
 priority = Priority.MAJOR, 
 tags = Tags.BRAIN_OVERLOAD)
 @ActivatedByDefault
-@SqaleLinearWithOffsetRemediation(coeff = "1min", offset = "10min", effortToFixDescription = "per complexity point above the threshold")
 public class TableWithTooManyFieldsCheck extends SquidCheck<LexerlessGrammar> {
 
 	private static final int DEFAULT = 5;

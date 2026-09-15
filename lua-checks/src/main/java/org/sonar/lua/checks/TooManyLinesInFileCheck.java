@@ -27,7 +27,6 @@ import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.sslr.parser.LexerlessGrammar;
 import org.sonar.lua.checks.utils.Tags;
@@ -39,7 +38,6 @@ import org.sonar.lua.checks.utils.Tags;
     name = "Files should not have too many lines",
     tags = Tags.BRAIN_OVERLOAD
 )
-@SqaleConstantRemediation("1h")
 @ActivatedByDefault
 public class TooManyLinesInFileCheck extends SquidCheck<LexerlessGrammar> {
   public static final String CHECK_KEY = "S104";

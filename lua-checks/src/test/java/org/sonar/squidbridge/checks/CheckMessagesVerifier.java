@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Minimal test verifier for squidbridge CheckMessage collections.

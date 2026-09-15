@@ -34,7 +34,6 @@ import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
@@ -45,7 +44,6 @@ import org.sonar.sslr.parser.LexerlessGrammar;
     tags = Tags.CONVENTION
 )
 @ActivatedByDefault
-@SqaleConstantRemediation("1min")
 public class LineLengthCheck extends SquidCheck<LexerlessGrammar> implements CharsetAwareVisitor {
 
   private static final int DEFAULT_MAXIMUM_LINE_LENGTH = 80;

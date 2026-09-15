@@ -24,7 +24,7 @@ import org.mockito.Mockito;
 import org.sonar.api.Plugin;
 import org.sonar.api.SonarRuntime;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LuaPluginTest {
 

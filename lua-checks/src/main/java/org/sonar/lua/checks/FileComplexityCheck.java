@@ -26,7 +26,6 @@ import org.sonar.lua.checks.utils.Tags;
 import org.sonar.check.RuleProperty;
 import org.sonar.lua.api.LuaMetric;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleLinearWithOffsetRemediation;
 import org.sonar.squidbridge.api.SourceFile;
 import org.sonar.squidbridge.checks.ChecksHelper;
 import org.sonar.squidbridge.checks.SquidCheck;
@@ -39,10 +38,6 @@ import org.sonar.sslr.parser.LexerlessGrammar;
     tags = Tags.BRAIN_OVERLOAD
 )
 @ActivatedByDefault
-@SqaleLinearWithOffsetRemediation(
-    coeff = "1min",
-    offset = "30min",
-    effortToFixDescription = "per complexity point above the threshold")
 public class FileComplexityCheck extends SquidCheck<LexerlessGrammar> {
   public static final String CHECK_KEY = "FileComplexity";
   private static final int DEFAULT_MAXIMUM_FILE_COMPLEXITY_THRESHOLD = 200;

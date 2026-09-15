@@ -28,7 +28,6 @@ import org.sonar.lua.checks.utils.Function;
 import org.sonar.lua.checks.utils.Tags;
 import org.sonar.lua.grammar.LuaGrammar;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.sslr.parser.LexerlessGrammar;
 import javax.annotation.Nullable;
@@ -43,7 +42,6 @@ import java.util.regex.Pattern;
   tags = Tags.CONVENTION,
   priority = Priority.MINOR)
 @ActivatedByDefault
-@SqaleConstantRemediation("5min")
 public class LocalFunctionNameCheck extends SquidCheck<LexerlessGrammar> {
 
 

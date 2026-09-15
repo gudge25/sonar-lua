@@ -28,7 +28,6 @@ import org.sonar.check.RuleProperty;
 import org.sonar.lua.checks.utils.Tags;
 import org.sonar.lua.grammar.LuaGrammar;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
@@ -38,7 +37,6 @@ import org.sonar.sslr.parser.LexerlessGrammar;
   priority = Priority.MAJOR,
   tags = {Tags.BRAIN_OVERLOAD})
 @ActivatedByDefault
-@SqaleConstantRemediation("20min")
 public class FunctionWithTooManyParametersCheck extends SquidCheck<LexerlessGrammar> {
 
   private static final int DEFAULT = 7;

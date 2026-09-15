@@ -34,7 +34,7 @@ import org.sonar.sslr.parser.LexerlessGrammar;
 import java.io.File;
 import java.util.Collections;
 
-import static org.fest.assertions.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 public class LuaAstScannerTest {
 	 
 

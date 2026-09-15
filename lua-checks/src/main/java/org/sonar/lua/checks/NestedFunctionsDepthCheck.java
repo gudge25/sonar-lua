@@ -27,7 +27,6 @@ import org.sonar.lua.grammar.LuaGrammar;
 import org.sonar.lua.api.LuaKeyword;
 import org.sonar.lua.checks.utils.Tags;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleConstantRemediation;
 import org.sonar.squidbridge.checks.SquidCheck;
 import org.sonar.sslr.parser.LexerlessGrammar;
 
@@ -39,7 +38,6 @@ import javax.annotation.Nullable;
   priority = Priority.MAJOR,
   tags = Tags.PITFALL)
 @ActivatedByDefault
-@SqaleConstantRemediation("10min")
 public class NestedFunctionsDepthCheck extends SquidCheck<LexerlessGrammar> {
 
   private int nestingLevel;

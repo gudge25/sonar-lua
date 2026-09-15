@@ -29,7 +29,6 @@ import org.sonar.lua.api.LuaMetric;
 import org.sonar.lua.checks.utils.LuaCheck;
 import org.sonar.lua.checks.utils.Tags;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleLinearWithOffsetRemediation;
 import org.sonar.squidbridge.api.SourceCode;
 import org.sonar.squidbridge.checks.ChecksHelper;
 
@@ -41,7 +40,6 @@ import org.sonar.squidbridge.checks.ChecksHelper;
   priority = Priority.MAJOR,
   tags = Tags.BRAIN_OVERLOAD )
 @ActivatedByDefault
-@SqaleLinearWithOffsetRemediation(coeff = "1min", offset = "10min", effortToFixDescription = "per complexity point above the threshold")
 public class FunctionCallComplexityCheck extends LuaCheck {
 
   private static final int DEFAULT_MAXIMUM_FUNCCALL_COMPLEXITY_THRESHOLD = 5;

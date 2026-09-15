@@ -29,8 +29,6 @@ import org.sonar.lua.checks.utils.LuaCheck;
 import org.sonar.lua.checks.utils.Tags;
 import org.sonar.lua.grammar.LuaGrammar;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleLinearWithOffsetRemediation;
-import org.sonar.squidbridge.annotations.SqaleSubCharacteristic;
 import org.sonar.squidbridge.api.SourceFunction;
 import org.sonar.squidbridge.checks.ChecksHelper;
 
@@ -39,7 +37,6 @@ name = "Functions should not be too complex",
 priority = Priority.MAJOR, 
 tags = Tags.BRAIN_OVERLOAD)
 @ActivatedByDefault
-@SqaleLinearWithOffsetRemediation(coeff = "1min", offset = "10min", effortToFixDescription = "per complexity point above the threshold")
 public class FunctionComplexityCheck extends LuaCheck {
 	public static final String CHECK_KEY = "FunctionComplexity";
 	private static final int DEFAULT_MAXIMUM_FUNCTION_COMPLEXITY_THRESHOLD = 10;

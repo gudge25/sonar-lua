@@ -24,7 +24,6 @@ import org.sonar.check.Priority;
 import org.sonar.check.Rule;
 import org.sonar.check.RuleProperty;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
-import org.sonar.squidbridge.annotations.SqaleLinearWithOffsetRemediation;
 import org.sonar.squidbridge.api.SourceClass;
 import org.sonar.squidbridge.checks.ChecksHelper;
 import org.sonar.lua.api.LuaMetric;
@@ -38,7 +37,6 @@ import org.sonar.lua.grammar.LuaGrammar;
   priority = Priority.MAJOR,
   tags = Tags.BRAIN_OVERLOAD)
 @ActivatedByDefault
-@SqaleLinearWithOffsetRemediation(coeff = "1min", offset = "10min", effortToFixDescription = "per complexity point above the threshold")
 
 public class TableComplexityCheck extends LuaCheck {
 
