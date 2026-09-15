@@ -52,8 +52,8 @@ public final class LuaLexer {
       .withChannel(new BlackHoleChannel("\\s++"))
 
       // Comments
-      .withChannel(commentRegexp("//[^\\n\\r]*+"))
-      .withChannel(commentRegexp("/\\*[\\s\\S]*?\\*/"))
+      .withChannel(commentRegexp("--\\[\\[[\\s\\S]*?\\]\\]"))
+      .withChannel(commentRegexp("--[^\\n\\r]*+"))
 
       // String Literals
       .withChannel(regexp(GenericTokenType.LITERAL, "\"([^\"\\\\]*+(\\\\[\\s\\S])?+)*+\""))

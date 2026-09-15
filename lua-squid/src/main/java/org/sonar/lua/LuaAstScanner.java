@@ -1,6 +1,6 @@
 /*
  * SonarQube Lua Plugin
- * Copyright (C) 2016 
+ * Copyright (C) 2016
  * mailto:fati.ahmadi66 AT gmail DOT com
  *
  * This program is free software; you can redistribute it and/or
@@ -19,11 +19,10 @@
  */
 package org.sonar.lua;
 
-import org.sonar.lua.SourceFuncCall;
 import com.google.common.base.Charsets;
 import com.sonar.sslr.api.AstNode;
 import com.sonar.sslr.impl.Parser;
-import org.sonar.sslr.parser.LexerlessGrammar;
+import org.sonar.lua.SourceFuncCall;
 import org.sonar.lua.api.LuaMetric;
 import org.sonar.lua.grammar.LuaGrammar;
 import org.sonar.lua.metrics.ComplexityVisitor;
@@ -42,23 +41,24 @@ import org.sonar.squidbridge.api.SourceProject;
 import org.sonar.squidbridge.indexer.QueryByType;
 import org.sonar.squidbridge.metrics.CommentsVisitor;
 import org.sonar.squidbridge.metrics.CounterVisitor;
-import org.sonar.squidbridge.metrics.LinesVisitor;
 import org.sonar.squidbridge.metrics.LinesOfCodeVisitor;
+import org.sonar.squidbridge.metrics.LinesVisitor;
+import org.sonar.sslr.parser.LexerlessGrammar;
+
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-
 
 public final class LuaAstScanner {
 
   private LuaAstScanner() {
   }
 
-   /**
+  /**
    * Helper method for testing checks without having to deploy them on a Sonar instance.
    */
+  @SafeVarargs
   public static SourceFile scanSingleFile(File file, SquidAstVisitor<LexerlessGrammar>... visitors) {
     if (!file.isFile()) {
       throw new IllegalArgumentException("File '" + file + "' not found.");
@@ -80,17 +80,16 @@ public final class LuaAstScanner {
     AstScanner.Builder<LexerlessGrammar> builder = new ProgressAstScanner.Builder(context).setBaseParser(parser);
 
     /* Metrics */
-    builder.withMetrics(LuaMetric.values()); 
+    builder.withMetrics(LuaMetric.values());
     /* Files */
     builder.setFilesMetric(LuaMetric.FILES);
-    
-    /* Comments */
-    builder.setCommentAnalyser(new LuaCommentAnalyser()); 
-    
 
- 
-//*table constructor*/
-    builder.withSquidAstVisitor(new SourceCodeBuilderVisitor<LexerlessGrammar>(new SourceCodeBuilderCallback() {
+    /* Comments */
+    builder.setCommentAnalyser(new LuaCommentAnalyser());
+
+    /* Table constructors */
+    builder.withSquidAstVisitor(new SourceCodeBuilderVisitor<LexerlessGrammar>(
+      new SourceCodeBuilderCallback() {
         private int seq = 0;
 
         @Override
@@ -100,65 +99,60 @@ public final class LuaAstScanner {
           cls.setStartAtLine(astNode.getTokenLine());
           return cls;
         }
-      },LuaGrammar.TABLECONSTRUCTOR));
+      }, LuaGrammar.TABLECONSTRUCTOR));
 
-      builder.withSquidAstVisitor(CounterVisitor.<LexerlessGrammar>builder()
-        .setMetricDef(LuaMetric.TABLECONSTRUCTORS)
-        .subscribeTo(LuaGrammar.TABLECONSTRUCTOR)
-        .build());
-    
-    /* Functions*/
-    
-      
+    builder.withSquidAstVisitor(CounterVisitor.<LexerlessGrammar>builder()
+      .setMetricDef(LuaMetric.TABLECONSTRUCTORS)
+      .subscribeTo(LuaGrammar.TABLECONSTRUCTOR)
+      .build());
 
-      /* Functions*/
-      
-
-      builder.withSquidAstVisitor(new SourceCodeBuilderVisitor<LexerlessGrammar>(new SourceCodeBuilderCallback() {
+    /* Functions */
+    builder.withSquidAstVisitor(new SourceCodeBuilderVisitor<LexerlessGrammar>(
+      new SourceCodeBuilderCallback() {
         private int seq = 0;
 
         @Override
         public SourceCode createSourceCode(SourceCode parentSourceCode, AstNode astNode) {
           seq++;
-         
           SourceFunction function = new SourceFunction("function" + seq);
           function.setStartAtLine(astNode.getTokenLine());
           return function;
         }
-      }, LuaGrammar.FUNCTION,LuaGrammar.FUNCSTAT,LuaGrammar.LOCALFUNCSTAT));
+      },
+      LuaGrammar.FUNCTION,
+      LuaGrammar.FUNCSTAT,
+      LuaGrammar.LOCALFUNCSTAT));
 
-      builder.withSquidAstVisitor(CounterVisitor.<LexerlessGrammar>builder()
-        .setMetricDef(LuaMetric.FUNCTIONS)
-        .subscribeTo(LuaGrammar.FUNCTION,LuaGrammar.FUNCSTAT,LuaGrammar.LOCALFUNCSTAT)
-        .build());
+    builder.withSquidAstVisitor(CounterVisitor.<LexerlessGrammar>builder()
+      .setMetricDef(LuaMetric.FUNCTIONS)
+      .subscribeTo(LuaGrammar.FUNCTION, LuaGrammar.FUNCSTAT, LuaGrammar.LOCALFUNCSTAT)
+      .build());
 
-      
-      /*FanctionCall */
-      
-      builder.withSquidAstVisitor(new SourceCodeBuilderVisitor<LexerlessGrammar>(new SourceCodeBuilderCallback() {
-          private int seq = 0;
-          
-          @Override
-          public SourceCode createSourceCode(SourceCode parentSourceCode, AstNode astNode) {
-              seq++;
-              
-              SourceFuncCall functionCall = new SourceFuncCall("functionCall" + seq);
-              functionCall.setStartAtLine(astNode.getTokenLine());
-              return functionCall;
-          }
-      },LuaGrammar.FUNCTIONCALL));
-      
-      builder.withSquidAstVisitor(CounterVisitor.<LexerlessGrammar>builder()
-                                  .setMetricDef(LuaMetric.FUNCTIONCALL)
-                                  .subscribeTo(LuaGrammar.FUNCTIONCALL)
-                                  .build());
+    /* Function calls */
+    builder.withSquidAstVisitor(new SourceCodeBuilderVisitor<LexerlessGrammar>(
+      new SourceCodeBuilderCallback() {
+        private int seq = 0;
 
+        @Override
+        public SourceCode createSourceCode(SourceCode parentSourceCode, AstNode astNode) {
+          seq++;
+          SourceFuncCall functionCall = new SourceFuncCall("functionCall" + seq);
+          functionCall.setStartAtLine(astNode.getTokenLine());
+          return functionCall;
+        }
+      }, LuaGrammar.FUNCTIONCALL));
+
+    builder.withSquidAstVisitor(CounterVisitor.<LexerlessGrammar>builder()
+      .setMetricDef(LuaMetric.FUNCTIONCALL)
+      .subscribeTo(LuaGrammar.FUNCTIONCALL)
+      .build());
 
     /* Metrics */
     // Lines of code and comments
     builder.withSquidAstVisitor(new LinesVisitor<LexerlessGrammar>(LuaMetric.LINES));
     builder.withSquidAstVisitor(new LinesOfCodeVisitor<LexerlessGrammar>(LuaMetric.LINES_OF_CODE));
-    builder.withSquidAstVisitor(CommentsVisitor.<LexerlessGrammar>builder().withCommentMetric(LuaMetric.COMMENT_LINES)
+    builder.withSquidAstVisitor(CommentsVisitor.<LexerlessGrammar>builder()
+      .withCommentMetric(LuaMetric.COMMENT_LINES)
       .withNoSonar(true)
       .withIgnoreHeaderComment(conf.getIgnoreHeaderComments())
       .build());
@@ -167,25 +161,18 @@ public final class LuaAstScanner {
     builder.withSquidAstVisitor(CounterVisitor.<LexerlessGrammar>builder()
       .setMetricDef(LuaMetric.STATEMENTS)
       .subscribeTo(
-    		 
-          LuaGrammar.IF_STATEMENT,
-          LuaGrammar.WHILE_STATEMENT,
-          LuaGrammar.FOR_STATEMENT,
-          LuaGrammar.DO_STATEMENT,
-          LuaGrammar.WHILE_STATEMENT,
-          LuaGrammar.REPEAT_STATEMENT,
-        
-          LuaGrammar.Keyword.AND,
-  
-          LuaGrammar.Keyword.OR
-       
-          
- 
-        ).build());
-      
-    /* END calculation metric*/
+        LuaGrammar.IF_STATEMENT,
+        LuaGrammar.WHILE_STATEMENT,
+        LuaGrammar.FOR_STATEMENT,
+        LuaGrammar.DO_STATEMENT,
+        LuaGrammar.REPEAT_STATEMENT,
+        LuaGrammar.Keyword.AND,
+        LuaGrammar.Keyword.OR
+      ).build());
+
+    /* Complexity */
     builder.withSquidAstVisitor(new ComplexityVisitor());
-    
+
     /* External visitors (typically Check ones) */
     for (SquidAstVisitor<LexerlessGrammar> visitor : visitors) {
       if (visitor instanceof CharsetAwareVisitor) {
