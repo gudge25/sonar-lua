@@ -30,8 +30,7 @@ import org.sonar.lua.checks.utils.LuaCheck;
 import org.sonar.lua.checks.utils.Tags;
 import org.sonar.squidbridge.annotations.ActivatedByDefault;
 import org.sonar.squidbridge.annotations.SqaleLinearWithOffsetRemediation;
-import org.sonar.squidbridge.api.SourceClass;
-import org.sonar.squidbridge.api.SourceFunction;
+import org.sonar.squidbridge.api.SourceCode;
 import org.sonar.squidbridge.checks.ChecksHelper;
 
 @Rule(
@@ -61,9 +60,9 @@ public class FunctionCallComplexityCheck extends LuaCheck {
 
   @Override
   public void leaveNode(AstNode node) {
-	  SourceFunction function = (SourceFunction) getContext().peekSourceCode();
+    SourceCode functionCall = getContext().peekSourceCode();
 
-    int functionComplexity = ChecksHelper.getRecursiveMeasureInt(function, LuaMetric.COMPLEXITY);
+    int functionComplexity = ChecksHelper.getRecursiveMeasureInt(functionCall, LuaMetric.COMPLEXITY);
     if (functionComplexity > maximumFunctionCallComplexityThreshold) {
       String message = String.format("FunctionCall has a complexity of %s which is greater than %s authorized.", functionComplexity, maximumFunctionCallComplexityThreshold);
       createIssueWithCost(message, node, (double)functionComplexity - maximumFunctionCallComplexityThreshold);
