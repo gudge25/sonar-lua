@@ -1,5 +1,7 @@
-SonarQube Lua Plugin  -> MODERN
+SonarQube Lua Plugin
 ====================
+
+[![Release](https://img.shields.io/github/v/release/gudge25/sonar-lua)](https://github.com/gudge25/sonar-lua/releases)
 
 ## Description
 
@@ -14,8 +16,10 @@ It was originally written for SonarQube 5.6 and has been modernized to work with
 - 16 rules registered in the `lua` repository
 - 14 rules active by default in the `Sonar way` quality profile
 - Issue reporting for activated rules
+- Lua long comments (`--[=[ ]=]`) support
 - Syntax highlighting and CPD token registration
 - Dockerized Maven build environment
+- AssertJ-based unit tests (all passing)
 
 ## Build Requirements
 
@@ -35,7 +39,7 @@ make build
 This builds the plugin JAR:
 
 ```
-sonar-lua-plugin/target/sonar-lua-plugin-1.1.jar
+sonar-lua-plugin/target/sonar-lua-plugin-2.0.jar
 ```
 
 You can also build manually with Docker:
@@ -46,12 +50,24 @@ docker run --rm -v "$(pwd)":/build sonar-lua-build \
   mvn clean package -Dmaven.test.skip=true -Dlicense.skip=true
 ```
 
-## Deploy
+## Install from Release
+
+Download the latest JAR from the [Releases](https://github.com/gudge25/sonar-lua/releases) page and copy it into SonarQube:
+
+```bash
+wget https://github.com/gudge25/sonar-lua/releases/download/v2.0/sonar-lua-plugin-2.0.jar \
+  -O /opt/sonarqube/extensions/plugins/sonar-lua-plugin-2.0.jar
+# or for Docker:
+docker cp sonar-lua-plugin-2.0.jar sonarqube:/opt/sonarqube/extensions/plugins/
+docker restart sonarqube
+```
+
+## Deploy from Source
 
 Copy the built JAR into the SonarQube extensions directory and restart SonarQube:
 
 ```bash
-docker cp sonar-lua-plugin/target/sonar-lua-plugin-1.1.jar \
+docker cp sonar-lua-plugin/target/sonar-lua-plugin-2.0.jar \
   sonarqube:/opt/sonarqube/extensions/plugins/
 docker restart sonarqube
 ```
@@ -123,14 +139,19 @@ Major changes compared to the original plugin:
 - Removed Cobertura coverage support (relied on removed APIs)
 - Removed `FileLinesVisitor` (relied on removed `FileLinesContextFactory`)
 - Removed old complexity distribution metrics (`FUNCTION_COMPLEXITY_DISTRIBUTION`, `FILE_COMPLEXITY_DISTRIBUTION`)
-- Added compatibility stubs for old `org.sonar.check.*` annotations used by checks
+- Removed deprecated `RuleStatus.READY` and `Sqale*` annotations
+- Fixed Lua comment lexing (`--` and `--[[ ]]`) and long-comment parsing (`--[=[ ]=]`)
+- Fixed `FunctionCallComplexityCheck` runtime cast bug
+- Fixed duplicate `sslr-core` dependency conflict
+- Replaced `fest-assert` with AssertJ
+- Updated dependencies: `commons-io` 2.16.1, `logback` 1.5.6, `commons-lang3` 3.14.0
 - Rewrote `LuaSquidSensor` to manually instantiate checks and save issues via the modern `SensorContext` API
 
-## Remaining Work for Full Feature Parity
+## Remaining Work
 
 - Re-implement coverage support using the modern coverage API
-- Modernize the remaining `lua-checks` unit tests (currently skipped because the old test harness is incompatible)
-- Clean up compatibility stubs and fully migrate checks to the modern API
+- Expand grammar coverage for newer Lua 5.x syntax (e.g., `goto`, bitwise operators, integer division)
+- Add more comprehensive unit tests for checks and metrics
 
 ## Metrics
 
