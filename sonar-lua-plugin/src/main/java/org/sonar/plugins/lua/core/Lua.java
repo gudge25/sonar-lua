@@ -19,14 +19,11 @@
  */
 package org.sonar.plugins.lua.core;
 
-import com.google.common.collect.Lists;
-import org.apache.commons.lang.StringUtils;
+import java.util.Arrays;
+
 import org.sonar.api.config.Configuration;
 import org.sonar.api.resources.AbstractLanguage;
 import org.sonar.plugins.lua.LuaPlugin;
-
-import java.util.List;
-
 
 public class Lua extends AbstractLanguage {
 
@@ -52,21 +49,13 @@ public class Lua extends AbstractLanguage {
    */
   @Override
   public String[] getFileSuffixes() {
-    String[] suffixes = filterEmptyStrings(configuration.getStringArray(LuaPlugin.FILE_SUFFIXES_KEY));
-    if (suffixes.length == 0) {
-      suffixes = StringUtils.split(DEFAULT_FILE_SUFFIXES, ",");
+    String[] suffixes = configuration.getStringArray(LuaPlugin.FILE_SUFFIXES_KEY);
+    if (suffixes == null || suffixes.length == 0) {
+      return new String[] {DEFAULT_FILE_SUFFIXES};
     }
-    return suffixes;
-  }
-
-  private static String[] filterEmptyStrings(String[] stringArray) {
-    List<String> nonEmptyStrings = Lists.newArrayList();
-    for (String string : stringArray) {
-      if (StringUtils.isNotBlank(string.trim())) {
-        nonEmptyStrings.add(string.trim());
-      }
-    }
-    return nonEmptyStrings.toArray(new String[nonEmptyStrings.size()]);
+    return Arrays.stream(suffixes)
+      .filter(s -> s != null && !s.trim().isEmpty())
+      .toArray(String[]::new);
   }
 
 }

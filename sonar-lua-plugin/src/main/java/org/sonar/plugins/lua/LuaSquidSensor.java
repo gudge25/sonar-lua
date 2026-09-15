@@ -105,8 +105,7 @@ public class LuaSquidSensor implements Sensor {
     Iterable<java.io.File> files = fileSystem.files(
       predicates.and(
         predicates.hasType(InputFile.Type.MAIN),
-        predicates.hasLanguage(Lua.KEY),
-        inputFile -> !inputFile.absolutePath().endsWith("mxml")
+        predicates.hasLanguage(Lua.KEY)
       ));
     scanner.scanFiles(ImmutableList.copyOf(files));
 
