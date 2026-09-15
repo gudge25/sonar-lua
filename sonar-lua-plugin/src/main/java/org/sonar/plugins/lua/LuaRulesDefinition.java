@@ -21,7 +21,6 @@ package org.sonar.plugins.lua;
 
 import java.lang.reflect.Field;
 import java.util.List;
-import org.sonar.api.rule.RuleStatus;
 import org.sonar.api.server.rule.RulesDefinition;
 import org.sonar.api.server.rule.RulesDefinition.NewRule;
 import org.sonar.api.server.rule.RulesDefinition.NewRepository;
@@ -65,7 +64,6 @@ public final class LuaRulesDefinition implements RulesDefinition {
     NewRule newRule = repository.createRule(rule.key())
       .setName(rule.name())
       .setHtmlDescription(description)
-      .setStatus(RuleStatus.READY)
       .setSeverity(mapPriority(rule.priority()))
       .setTags(rule.tags());
 
