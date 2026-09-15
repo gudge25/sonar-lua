@@ -1,4 +1,4 @@
-SonarQube Lua Plugin
+SonarQube Lua Plugin  -> MODERN
 ====================
 
 ## Description
